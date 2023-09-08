@@ -292,6 +292,16 @@
       ]
     },
     {
+      "kind": "PodCheckpointOptions",
+      "name": "pods/checkpoint",
+      "namespaced": true,
+      "singularName": "",
+      "verbs": [
+        "create",
+        "get"
+      ]
+    },
+    {
       "kind": "Pod",
       "name": "pods/ephemeralcontainers",
       "namespaced": true,

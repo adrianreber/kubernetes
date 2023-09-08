@@ -230,6 +230,7 @@ func (p *legacyProvider) NewRESTStorage(apiResourceConfigSource serverstorage.AP
 		storage[resource+"/log"] = podStorage.Log
 		storage[resource+"/exec"] = podStorage.Exec
 		storage[resource+"/portforward"] = podStorage.PortForward
+		storage[resource+"/checkpoint"] = podStorage.Checkpoint
 		storage[resource+"/proxy"] = podStorage.Proxy
 		storage[resource+"/binding"] = podStorage.Binding
 		if podStorage.Eviction != nil {

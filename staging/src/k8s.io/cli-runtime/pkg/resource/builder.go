@@ -930,6 +930,7 @@ func (b *Builder) visitBySelector() *Result {
 
 	visitors := []Visitor{}
 	for _, mapping := range mappings {
+		fmt.Printf("mapping %v\n", mapping)
 		client, err := b.getClient(mapping.GroupVersionKind.GroupVersion())
 		if err != nil {
 			result.err = err

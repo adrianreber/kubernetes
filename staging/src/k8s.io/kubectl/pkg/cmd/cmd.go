@@ -40,6 +40,7 @@ import (
 	"k8s.io/kubectl/pkg/cmd/auth"
 	"k8s.io/kubectl/pkg/cmd/autoscale"
 	"k8s.io/kubectl/pkg/cmd/certificates"
+	"k8s.io/kubectl/pkg/cmd/checkpoint"
 	"k8s.io/kubectl/pkg/cmd/clusterinfo"
 	"k8s.io/kubectl/pkg/cmd/completion"
 	cmdconfig "k8s.io/kubectl/pkg/cmd/config"
@@ -448,6 +449,7 @@ func NewKubectlCommand(o KubectlOptions) *cobra.Command {
 				replace.NewCmdReplace(f, o.IOStreams),
 				wait.NewCmdWait(f, o.IOStreams),
 				kustomize.NewCmdKustomize(o.IOStreams),
+				checkpoint.NewCmdCheckpoint(f, o.IOStreams),
 			},
 		},
 		{
