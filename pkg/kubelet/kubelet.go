@@ -3282,6 +3282,50 @@ func (kl *Kubelet) CheckpointContainer(
 	return nil
 }
 
+// CheckpointPod tries to checkpoint a pod sandbox. The parameters are used to
+// look up the specified pod. If the pod specified by the given parameters
+// cannot be found an error is returned. If the pod is found the container
+// engine will be asked to checkpoint the given pod sandbox into the kubelet's default
+// checkpoint directory.
+func (kl *Kubelet) CheckpointPod(
+	ctx context.Context,
+	podUID types.UID,
+	podFullName string,
+	options *runtimeapi.CheckpointPodRequest,
+) error {
+	// Get the pod status to find the sandbox ID
+	pod, podFound := kl.podManager.GetPodByUID(podUID)
+	if !podFound {
+		return fmt.Errorf("pod %v not found", podUID)
+	}
+
+	podStatus, err := kl.containerRuntime.GetPodStatus(ctx, pod.UID, pod.Name, pod.Namespace)
+	if err != nil {
+		return err
+	}
+
+	if podStatus.SandboxStatuses == nil || len(podStatus.SandboxStatuses) == 0 {
+		return fmt.Errorf("pod %v has no sandbox", podFullName)
+	}
+
+	options.Location = filepath.Join(
+		kl.getCheckpointsDir(),
+		fmt.Sprintf(
+			"checkpoint-%s-%s.tar",
+			podFullName,
+			time.Now().Format(time.RFC3339),
+		),
+	)
+
+	options.PodSandboxId = podStatus.SandboxStatuses[0].Id
+
+	if err := kl.containerRuntime.CheckpointPod(ctx, options); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // ListMetricDescriptors gets the descriptors for the metrics that will be returned in ListPodSandboxMetrics.
 func (kl *Kubelet) ListMetricDescriptors(ctx context.Context) ([]*runtimeapi.MetricDescriptor, error) {
 	return kl.containerRuntime.ListMetricDescriptors(ctx)
