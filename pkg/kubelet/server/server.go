@@ -1186,6 +1186,14 @@ func (s *Server) checkpointPod(request *restful.Request, response *restful.Respo
 		options.LeaveRunning = leaveRunning
 	}
 
+	// Query parameter to specify the export location (OCI image reference or file path)
+	exports := request.Request.URL.Query()["export"]
+	if len(exports) > 0 {
+		// If the user specified one or multiple values for export we
+		// are using the last available value.
+		options.Location = exports[len(exports)-1]
+	}
+
 	if err := s.host.CheckpointPod(ctx, pod.UID, kubecontainer.GetPodFullName(pod), options); err != nil {
 		response.WriteError(
 			http.StatusInternalServerError,

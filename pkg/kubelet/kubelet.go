@@ -2144,6 +2144,18 @@ func (kl *Kubelet) SyncPod(ctx context.Context, updateType kubetypes.SyncPodType
 	// Ensure the pod is being probed
 	kl.probeManager.AddPod(ctx, pod)
 
+	// For pods being restored from checkpoint, prepare container paths that are normally
+	// created during container startup. These paths must exist before RestorePod is called
+	// because restored containers expect them immediately.
+	// This includes: /etc/hosts, termination log paths, and container directories.
+	if pod.Spec.RestoreFrom != nil && *pod.Spec.RestoreFrom != "" {
+		if err := kl.prepareContainerPathsForRestore(pod, podStatus); err != nil {
+			kl.recorder.Eventf(pod, v1.EventTypeWarning, events.FailedToMakePodDataDirectories, "error preparing container paths for restore: %v", err)
+			klog.ErrorS(err, "Unable to prepare container paths for pod restore", "pod", klog.KObj(pod))
+			return false, err
+		}
+	}
+
 	// TODO(#113606): use cancellation from the incoming context parameter, which comes from the pod worker.
 	// Currently, using cancellation from that context causes test failures. To remove this WithoutCancel,
 	// any wait.Interrupted errors need to be filtered from result and bypass the reasonCache - cancelling
@@ -3308,14 +3320,17 @@ func (kl *Kubelet) CheckpointPod(
 		return fmt.Errorf("pod %v has no sandbox", podFullName)
 	}
 
-	options.Location = filepath.Join(
-		kl.getCheckpointsDir(),
-		fmt.Sprintf(
-			"checkpoint-%s-%s.tar",
-			podFullName,
-			time.Now().Format(time.RFC3339),
-		),
-	)
+	// Only set default location if export parameter was not provided
+	if options.Location == "" {
+		options.Location = filepath.Join(
+			kl.getCheckpointsDir(),
+			fmt.Sprintf(
+				"checkpoint-%s-%s.tar",
+				podFullName,
+				time.Now().Format(time.RFC3339),
+			),
+		)
+	}
 
 	options.PodSandboxId = podStatus.SandboxStatuses[0].Id
 

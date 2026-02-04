@@ -2039,6 +2039,12 @@ message RestorePodRequest {
     // Optional annotations to set on the restored pod sandbox.
     // These will override any annotations from the checkpoint.
     map<string, string> annotations = 4;
+    // Container configurations for all containers in the pod.
+    // This includes mount configurations that tell the runtime where to mount
+    // host paths (e.g., /etc/hosts, termination logs, volumes) into the containers.
+    // The runtime should match containers from the checkpoint with these configs
+    // by container name and apply the mount configurations.
+    repeated ContainerConfig container_configs = 5;
 }
 
 message RestorePodResponse {
